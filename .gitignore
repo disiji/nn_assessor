@@ -2,3 +2,4 @@ public/img/ignore
 public/img/profiles
 public/blog
 public/recommendation
+*.pyc
