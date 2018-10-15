@@ -52,6 +52,8 @@ def reliability_plot(ax, p, y, num_bins=10):
         y: (N, ) np.array. True label of data points.
         num_bins: an int. 
     OUTPUT:
+        ece: 
+        acc: 
         ax: an Axes object
     """
     Y_predict = np.argmax(p, axis=1)
@@ -71,11 +73,12 @@ def reliability_plot(ax, p, y, num_bins=10):
     accuracy_bins[np.isnan(accuracy_bins)] = 0
     diff = np.absolute(confidence_bins - accuracy_bins)
     ece = np.inner(diff,w)
+    acc = (Y_predict == Y_true).mean()
     
     ax.grid(True)
     ax.scatter([i+0.5 for i in range(num_bins)], accuracy_bins,label="Accuracy",marker="^",s=100)
     ax.plot(np.linspace(0, 1, 11),linestyle="--",linewidth=3,c = "gray")
-    ax.text(0.5, 0.9, 'ECE=%.4f'%ece, size=14, ha='left', va='center',
+    ax.text(0.5, 0.9, 'ECE=%.4f\nACC=%.4f'% (ece, acc), size=14, ha='left', va='center',
             bbox={'facecolor':'green', 'alpha':0.5, 'pad':4})
     ax.set_ylim((0.0,1.0))
     ax.set_xlim((0.0,num_bins))
@@ -86,4 +89,4 @@ def reliability_plot(ax, p, y, num_bins=10):
 #     ax.bar(range(NUM_BINS),accuracy_bins,color='b',width=1.0,label="Accuracy",alpha=0.8)
     ax.set_xticks(range(0, 1+num_bins, 2))
     ax.set_xticklabels(["%.1f" % i for  i in bins][::2])
-    return ece, ax
+    return ece, acc, ax
