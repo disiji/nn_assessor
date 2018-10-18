@@ -6,6 +6,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.isotonic import IsotonicRegression
 from sklearn.utils import check_random_state
 from sklearn.preprocessing import normalize
+from helper import EceEval
 
 
 def isotonic_regression(ax, x, y, w=[]):
@@ -36,11 +37,19 @@ def isotonic_regression(ax, x, y, w=[]):
     lc.set_array(np.ones(len(y)))
     lc.set_linewidths(np.full(n, 0.5))
 
-    ax.plot(x, y, 'r.', markersize=12, alpha = 0.5)
-    ax.plot(x, y_, 'g^', markersize=12, alpha = 0.5)
+    ax.plot(x, y, 'r.', markersize=12, alpha = 0.2)
+    ax.plot(x, y_, 'g^', markersize=12, alpha = 0.2)
     ax.plot(x, lr.predict(x[:, np.newaxis]), 'b-')
-    #ax.gca().add_collection(lc)
-    #ax.legend(('Data', 'Isotonic Fit', 'Linear Fit'), loc='lower right')
+    ax.set_xlim(-0.1, 1.1)
+    ax.set_ylim(-0.1, 1.1)
+    
+    # compute ece and acc after calibration
+    ece = EceEval(np.array([1-y_, y_]).T , y, num_bins = 20)
+    y_predict = y_ > 0.5
+    acc = (y_predict == y).mean()
+    
+    ax.text(0.05, 0.8, 'ECE=%.4f\nACC=%.4f'% (ece, acc), size=14, ha='left', va='center',
+            bbox={'facecolor':'green', 'alpha':0.5, 'pad':4})
     
     return ax
 
@@ -52,8 +61,8 @@ def reliability_plot(ax, p, y, num_bins=10):
         y: (N, ) np.array. True label of data points.
         num_bins: an int. 
     OUTPUT:
-        ece: 
-        acc: 
+        ece: expected calibration error
+        acc: accuracy
         ax: an Axes object
     """
     Y_predict = np.argmax(p, axis=1)
