@@ -4,6 +4,8 @@ from matplotlib.collections import LineCollection
 
 from sklearn.linear_model import LinearRegression
 from sklearn.isotonic import IsotonicRegression
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 from sklearn.utils import check_random_state
 from sklearn.preprocessing import normalize
 from helper import EceEval
@@ -33,12 +35,53 @@ def isotonic_regression(ax, x, y, w=[]):
     
     # Plot result
     segments = [[[i, y[i]], [i, y_[i]]] for i in range(n)]
-    lc = LineCollection(segments, zorder=0)
-    lc.set_array(np.ones(len(y)))
-    lc.set_linewidths(np.full(n, 0.5))
 
     ax.plot(x, y, 'r.', markersize=12, alpha = 0.2)
     ax.plot(x, y_, 'g^', markersize=12, alpha = 0.2)
+    ax.plot(x, lr.predict(x[:, np.newaxis]), 'b-')
+    ax.set_xlim(-0.1, 1.1)
+    ax.set_ylim(-0.1, 1.1)
+    
+    # compute ece and acc after calibration
+    ece = EceEval(np.array([1-y_, y_]).T , y, num_bins = 20)
+    y_predict = y_ > 0.5
+    acc = (y_predict == y).mean()
+    
+    ax.text(0.05, 0.8, 'ECE=%.4f\nACC=%.4f'% (ece, acc), size=14, ha='left', va='center',
+            bbox={'facecolor':'green', 'alpha':0.5, 'pad':4})
+    
+    return ax
+
+def gp_regression(ax, x, y):
+    """
+    INPUT:
+        ax: an Axes object
+        x: (N, ) np.array
+        y: (N, ) np.array
+    OUTPUT:
+        ax: an Axes object
+    """        
+    # Fit GaussianProcessRegressor and LinearRegression models
+    kernel = C(1.0, (1e-3, 1e3)) * RBF(10, (1e-2, 1e2))
+    gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=9)
+    gp.fit(x[:, np.newaxis], y)
+    y_, sigma_ = gp.predict(x[:, np.newaxis], return_std=True)    
+    print y_.shape
+    
+    lr = LinearRegression()
+    lr.fit(x[:, np.newaxis], y)  # x needs to be 2d for LinearRegression
+    
+
+    ax.plot(x, y, 'r.', markersize=12, alpha = 0.2)
+    ax.plot(x, y_, 'b-', label=u'Prediction')
+    
+    x_plot = np.atleast_2d(np.linspace(0, 1, 100)).T
+    y_plot, sigma = gp.predict(x_plot, return_std=True)
+    ax.fill(np.concatenate([x_plot, x_plot[::-1]]),
+             np.concatenate([y_plot - 1.9600 * sigma,
+                            (y_plot + 1.9600 * sigma)[::-1]]),
+             alpha=.5, fc='b', ec='None')
+    
     ax.plot(x, lr.predict(x[:, np.newaxis]), 'b-')
     ax.set_xlim(-0.1, 1.1)
     ax.set_ylim(-0.1, 1.1)
