@@ -4,8 +4,8 @@ from matplotlib.collections import LineCollection
 
 from sklearn.linear_model import LinearRegression
 from sklearn.isotonic import IsotonicRegression
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
+from sklearn.gaussian_process import GaussianProcessRegressor, GaussianProcessClassifier
+from sklearn.gaussian_process.kernels import RBF, DotProduct, ConstantKernel as C
 from sklearn.utils import check_random_state
 from sklearn.preprocessing import normalize
 from helper import EceEval
@@ -95,6 +95,51 @@ def gp_regression(ax, x, y):
             bbox={'facecolor':'green', 'alpha':0.5, 'pad':4})
     
     return ax
+
+def gpc_sklearn(ax, x, y, kernel):
+    """
+    Implemented with GaussianProcessClassifier in sklearn.gaussisan_process.
+    The implementation is based on Algorithm 3.1, 3.2, and 5.1 of GPML. 
+    The Laplace approximation is used for approximating the non-Gaussian posterior by a Gaussian.
+    The implementation is restricted to using the logistic link function.
+    
+    INPUT:
+        ax: an Axes object
+        x: (N, ) np.array
+        y: (N, ) np.array
+        kernel: sklearn.gaussian_process.kernels object. Used to initialize GaussianProcessClassifier
+    OUTPUT:
+        ax: an Axes object
+    """
+    # Fit GaussianProcessClassification and LinearRegression models
+    gpc = GaussianProcessClassifier(kernel=kernel)
+    gpc.fit(x[:, np.newaxis], y)
+    print("\nLearned kernel: %s" % gpc.kernel_)
+    y_ = gpc.predict_proba(x[:, np.newaxis])[:,1]
+    
+    lr = LinearRegression()
+    lr.fit(x[:, np.newaxis], y)  # x needs to be 2d for LinearRegression
+    
+    # Plot 
+    ax.plot(x, y, 'r.', markersize=12, alpha = 0.2)
+    ax.plot(x, y_, 'b^', markersize=12, alpha = 0.2)
+    
+    ax.plot(x, lr.predict(x[:, np.newaxis]), 'b-')
+    ax.set_xlim(-0.1, 1.1)
+    ax.set_ylim(-0.1, 1.1)
+    
+    # Plot 
+    
+    # compute ece and acc after calibration
+    ece = EceEval(np.array([1-y_, y_]).T , y, num_bins = 20)
+    y_predict = y_ > 0.5
+    acc = (y_predict == y).mean()
+    
+    ax.text(0.05, 0.8, 'ECE=%.4f\nACC=%.4f'% (ece, acc), size=14, ha='left', va='center',
+            bbox={'facecolor':'green', 'alpha':0.5, 'pad':4})
+    
+    return ax
+
 
 def reliability_plot(ax, p, y, num_bins=10):
     """
