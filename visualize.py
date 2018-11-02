@@ -9,6 +9,7 @@ from sklearn.gaussian_process.kernels import RBF, DotProduct, ConstantKernel as 
 from sklearn.utils import check_random_state
 from sklearn.preprocessing import normalize
 from helper import EceEval
+import GPy
 
 
 def isotonic_regression(ax, x, y, w=[]):
@@ -167,7 +168,7 @@ def gpc_gpy(ax, x, y, kernel=None):
             likelihood=GPy.likelihoods.Bernoulli()
         )
     print m, '\n'
-    for i in range(1):
+    for i in range(5):
         m.optimize('bfgs', max_iters=100) #first runs EP and then optimizes the kernel parameters
         print 'iteration:', i,
         print m
