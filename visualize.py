@@ -140,6 +140,62 @@ def gpc_sklearn(ax, x, y, kernel):
     
     return ax
 
+def gpc_gpy(ax, x, y, kernel=None):
+    """
+    Implemented with GPy. The latent function values modeled by GP are squashed through the probit function. 
+    We interleave runs of EP with optimization of the parameters using gradient descent methods. 
+    EP is a method for fitting a Gaussian to the posterior, p(f|y) of the latent (hidden) function, given the data. 
+    Whilst the parameters are being optimized, the EP approximation (the parameters of the EP factors) is fixed.
+    
+    INPUT:
+        ax: an Axes object
+        x: (N, ) np.array
+        y: (N, ) np.array
+        kernel: A GPy.kern object or None.
+    OUTPUT:
+        ax: an Axes object
+    """
+    # Fit GaussianProcessClassification and LinearRegression models
+    if kernel == None:
+        m = GPy.models.GPClassification(X=x[:, np.newaxis],Y=y[:, np.newaxis])
+    else:
+        m = GPy.core.GP(
+            X=x[:, np.newaxis],
+            Y=y[:, np.newaxis],
+            kernel=kernel, 
+            inference_method=GPy.inference.latent_function_inference.expectation_propagation.EP(),
+            likelihood=GPy.likelihoods.Bernoulli()
+        )
+    print m, '\n'
+    for i in range(1):
+        m.optimize('bfgs', max_iters=100) #first runs EP and then optimizes the kernel parameters
+        print 'iteration:', i,
+        print m
+        print ""
+    y_ = m.predict(x[:, np.newaxis])[0][:,0]
+    
+    lr = LinearRegression()
+    lr.fit(x[:, np.newaxis], y)  # x needs to be 2d for LinearRegression
+    
+    # Plot data, p(y=1|x) in GPC, linear regression
+    #m.plot()
+    ax.plot(x, y, 'r.', markersize=12, alpha = 0.2)
+    ax.plot(x, y_, 'b^', markersize=12, alpha = 0.2)
+    ax.plot(x, lr.predict(x[:, np.newaxis]), 'b-')
+    ax.set_xlim(-0.1, 1.1)
+    ax.set_ylim(-0.1, 1.1)
+    
+    # Plot 
+    
+    # compute ece and acc after calibration
+    ece = EceEval(np.array([1-y_, y_]).T , y, num_bins = 20)
+    y_predict = y_ > 0.5
+    acc = (y_predict == y).mean()
+    
+    ax.text(0.05, 0.8, 'ECE=%.4f\nACC=%.4f'% (ece, acc), size=14, ha='left', va='center',
+            bbox={'facecolor':'green', 'alpha':0.5, 'pad':4})
+    
+    return ax
 
 def reliability_plot(ax, p, y, num_bins=10):
     """
