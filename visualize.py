@@ -74,7 +74,7 @@ def gp_regression(ax, x, y):
     
 
     ax.plot(x, y, 'r.', markersize=12, alpha = 0.2)
-    ax.plot(x, y_, 'b-', label=u'Prediction')
+    ax.plot(x, y_, 'b^', markersize=12, alpha = 0.2)
     
     x_plot = np.atleast_2d(np.linspace(0, 1, 100)).T
     y_plot, sigma = gp.predict(x_plot, return_std=True)
@@ -168,7 +168,7 @@ def gpc_gpy(ax, x, y, kernel=None):
             likelihood=GPy.likelihoods.Bernoulli()
         )
     print m, '\n'
-    for i in range(5):
+    for i in range(3):
         m.optimize('bfgs', max_iters=100) #first runs EP and then optimizes the kernel parameters
         print 'iteration:', i,
         print m
