@@ -3,3 +3,5 @@ public/img/profiles
 public/blog
 public/recommendation
 *.pyc
+*.png
+*.ipynb_checkpoints*

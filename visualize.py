@@ -114,8 +114,7 @@ def gpc_sklearn(ax, x, y, kernel, optimizer="fmin_l_bfgs_b"):
             Can either be one of the internally supported optimizers for optimizing the kernel's parameters,
             specified by a string, or an externally defined optimizer passed as a callable.
             If a callable is passed, it must have the signature.
-            If None is passed, the kernel's parameters are kept fixed.
-    OUTPUT:
+            If None is passed, the kernel's parameters are kept [
         ax: an Axes object
     """
     # Fit GaussianProcessClassification and LinearRegression models
@@ -124,16 +123,19 @@ def gpc_sklearn(ax, x, y, kernel, optimizer="fmin_l_bfgs_b"):
     print("\nLearned kernel: %s" % gpc.kernel_)
     y_ = gpc.predict_proba(x[:, np.newaxis])[:,1]
     
-    lr = LinearRegression()
-    lr.fit(x[:, np.newaxis], y)  # x needs to be 2d for LinearRegression
+    xs = np.linspace(np.min(x), np.max(x), 1000)
+    ys = gpc.predict_proba(xs[:, np.newaxis])[:,1]
+    
+    # lr = LinearRegression()
+    # lr.fit(x[:, np.newaxis], y)  # x needs to be 2d for LinearRegression
     
     # Plot 
-    ax.plot(x, y, 'r.', markersize=12, alpha = 0.2)
-    ax.plot(x, y_, 'b^', markersize=12, alpha = 0.2)
+    # ax.plot(x, y, 'r.', markersize=12, alpha = 0.2)
+    ax.plot(xs, ys, markersize=12, alpha = 0.2)
     
-    ax.plot(x, lr.predict(x[:, np.newaxis]), 'b-')
-    ax.set_xlim(-0.1, 1.1)
-    ax.set_ylim(-0.1, 1.1)
+    # ax.plot(x, lr.predict(x[:, np.newaxis]), 'b-')
+    # ax.set_xlim(-0.1, 1.1)
+    # ax.set_ylim(-0.1, 1.1)
     
     # compute ece and acc after calibration
     ece = EceEval(np.array([1-y_, y_]).T , y, num_bins = 100)
@@ -284,3 +286,16 @@ def reliability_plot_binary(ax, p, y, num_bins=10):
     ax.set_xticks(range(0, 1+num_bins, 2))
     ax.set_xticklabels(["%.1f" % i for  i in bins][::2])
     return ece, acc, ax
+
+
+# plot Brightness v.s. accuracy
+def brightness_plot_binary(ax, brightness, Y_predicted, Y_true, num_bins=10):
+    bins = np.linspace(brightness.min(), brightness.max(), num_bins+1)
+    digitized = np.digitize(brightness, bins)
+    brightness_bins = np.array([brightness[digitized==i].mean() for i in range(1, num_bins+1)])
+    accuracy_bins = np.array([(Y_true[digitized==i]==Y_predicted[digitized==i]).mean() for i in range(1, num_bins+1)])
+    
+    ax.grid(True)
+    ax.scatter(brightness_bins, accuracy_bins,label="Accuracy", marker="*",s=12)
+    ax.set_xticklabels(["%.1f" % i for  i in bins][::2])
+    return ax
