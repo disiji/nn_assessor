@@ -204,6 +204,7 @@ def gpc_gpy(ax, x, y, kernel=None):
     
     return ax
 
+
 def reliability_plot(ax, p, y, num_bins=10):
     """
     INPUT:
@@ -255,9 +256,7 @@ def reliability_plot_binary(ax, p, y, num_bins=10):
     Y_predict = p > 0.5
     Y_true = y
     bins = np.linspace(0, 1, num_bins+1)
-    print bins
     digitized = np.digitize(p, bins)
-    print set(digitized)
     
     w = np.array([(digitized==i).sum() for i in range(1, num_bins+1)])
     w = normalize(w, norm='l1')
