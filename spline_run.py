@@ -48,12 +48,14 @@ training_list = [i for i in range(10000)]
 for run_idx in tqdm(range(NUM_RUN)):
     
     subset_init = np.random.choice(training_list, size = NUM_SAMPLES[0], replace = False).tolist()
+    subset_random = []
+    subset_active = []
     
     for idx in range(len(NUM_SAMPLES)):
         # randomly select datapoints and feed to spline regression
         # turn off plot
         if idx == 0:
-            subset_random = subset_init
+            subset_random += subset_init
         else:
             n_inc = NUM_SAMPLES[idx] - NUM_SAMPLES[idx-1]
             subset_random += np.random.choice([i for i in training_list if i not in subset_random], 
@@ -68,7 +70,7 @@ for run_idx in tqdm(range(NUM_RUN)):
         
         # randomly select datapoints and feed to spline regression
         if idx == 0:
-            subset_active = subset_init
+            subset_active += subset_init
         else:
             n_inc = NUM_SAMPLES[idx] - NUM_SAMPLES[idx-1]
             candidate_list = [i for i in training_list if i not in subset_active]
@@ -88,6 +90,7 @@ for run_idx in tqdm(range(NUM_RUN)):
         ece_active[NUM_SAMPLES[idx]].append(ece[0])
         acc_active[NUM_SAMPLES[idx]].append(acc)
         
+        print len(subset_random), len(subset_active)
         
 writecsv(ece_random, "output/%s/ece_random.csv" % DATASET)
 writecsv(acc_random, "output/%s/acc_random.csv" % DATASET)
