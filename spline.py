@@ -4,7 +4,7 @@ from pygam import LogisticGAM, s, f, l
 from pygam.datasets import default
 import numpy as np
 
-NUM_BINS = 10 # for spline 
+NUM_BINS = 100 # for spline 
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
@@ -29,7 +29,7 @@ def spline_classification_plot(ax, X, y):
     ax.set_ylim(0.0, 1.0)
 #     print gam.accuracy(X, y)
 #     print gam.summary()
-    return ece, acc, ax
+    return ece, acc, ax, confi
 
 def spline_classification(X, y):
     # gam = LogisticGAM(s(0)).gridsearch(X, y)
