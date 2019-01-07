@@ -18,7 +18,7 @@ NUM_CLASSES_PLOT = 4
 NUM_COL = 5
 NUM_RUN = 100
 # limit to the cases when the number of samples is less than 1000
-NUM_SAMPLES = [20, 50, 100] + [50 * _ for _ in range(3, 20)] 
+NUM_SAMPLES = [20, 30, 40, 50, 60, 70, 80, 90, 100] + [50 * _ for _ in range(3, 19)] 
 print len(NUM_SAMPLES)
 
 
