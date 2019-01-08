@@ -23,7 +23,10 @@ print len(NUM_SAMPLES)
 
 
 DATASET = "cifar100_predictions_dropout"
-data = np.genfromtxt("data/%s.txt" % DATASET)# 10000*101
+data = np.genfromtxt("data/cifar100/%s.txt" % DATASET)# 10000*101
+# DATASET = "svhn_predictions"
+# data = np.genfromtxt("data/svhn/%s.txt" % DATASET)
+
 score = data[:,1:]
 Y_predict = np.argmax(score, axis=1)
 Y_true = data[:,0]
@@ -46,7 +49,7 @@ acc_active_prb = defaultdict(list)
 ece_active_dtm = defaultdict(list)
 acc_active_dtm = defaultdict(list)
 
-training_list = [i for i in range(10000)]
+training_list = [i for i in range(data.shape[0])]
 
 for run_idx in tqdm(range(NUM_RUN)):
     
@@ -66,7 +69,9 @@ for run_idx in tqdm(range(NUM_RUN)):
                                       size = n_inc,
                                       replace = False).tolist()
         ece, acc, confi = spline_classification(np.max(score[subset_random], axis=1).reshape(-1, 1),
-                                         np.array(Y_true == Y_predict)[subset_random] * 1)
+                                                np.array(Y_true == Y_predict)[subset_random] * 1,
+                                                np.max(score, axis=1).reshape(-1, 1),
+                                                np.array(Y_true == Y_predict) * 1)
         # confi not used in random selection
         ece_random[NUM_SAMPLES[idx]].append(ece[0])
         acc_random[NUM_SAMPLES[idx]].append(acc)  
@@ -85,7 +90,9 @@ for run_idx in tqdm(range(NUM_RUN)):
                                          replace = False,
                                          p = p).tolist()
         ece, acc, confi = spline_classification(np.max(score[subset_active_prb], axis=1).reshape(-1, 1),
-                                         np.array(Y_true == Y_predict)[subset_active_prb] * 1)
+                                                np.array(Y_true == Y_predict)[subset_active_prb] * 1,
+                                                np.max(score, axis=1).reshape(-1, 1),
+                                                np.array(Y_true == Y_predict) * 1)
         confi = sigmoid(confi) # 100 * 1
         uncertainty = confi[:,1] - confi[:, 0]
         # compute probablity of each datapoint
@@ -103,7 +110,9 @@ for run_idx in tqdm(range(NUM_RUN)):
             weights[subset_active_dtm] = 0
             subset_active_dtm += heapq.nlargest(n_inc, range(len(weights)), weights.__getitem__)
         ece, acc, confi = spline_classification(np.max(score[subset_active_dtm], axis=1).reshape(-1, 1),
-                                         np.array(Y_true == Y_predict)[subset_active_dtm] * 1)
+                                                np.array(Y_true == Y_predict)[subset_active_dtm] * 1,
+                                                np.max(score, axis=1).reshape(-1, 1),
+                                                np.array(Y_true == Y_predict) * 1)
         confi = sigmoid(confi) # 100 * 1
         uncertainty = confi[:,1] - confi[:, 0]
         # compute probablity of each datapoint
