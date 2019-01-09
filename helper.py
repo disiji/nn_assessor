@@ -1,5 +1,9 @@
 import numpy as np
 from sklearn.preprocessing import normalize
+from pygam import GAM, s, te
+from pygam import LogisticGAM, s, f, l
+from pygam.datasets import default
+from sklearn.metrics import mean_squared_error
 
 def EceEval(p, y, num_bins):
     """
@@ -28,3 +32,17 @@ def EceEval(p, y, num_bins):
     diff = np.absolute(confidence_bins - accuracy_bins)
     ece = np.inner(diff,w)
     return ece
+
+
+def MseEval(gam1, gam2, num_bins):
+    """
+    INPUT:
+        gam1: an GAM model
+        gam2: an GAM model
+        num_bins: an int. 
+    OUTPUT:
+        mse: mean squre error between curves fit in gam1 and gam2
+    """
+    XX = np.linspace(0, 1, num_bins+1)
+    mse = mean_squared_error(gam1.predict_proba(XX), gam2.predict_proba(XX))
+    return mse

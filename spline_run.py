@@ -9,6 +9,7 @@ from calibration import *
 from collections import defaultdict
 from tqdm import tqdm
 from spline import *
+from active_learning import *
 import heapq
 
 
@@ -26,10 +27,17 @@ DATASET = "cifar100_predictions_dropout"
 data = np.genfromtxt("data/cifar100/%s.txt" % DATASET)# 10000*101
 # DATASET = "svhn_predictions"
 # data = np.genfromtxt("data/svhn/%s.txt" % DATASET)
+# DATASET = "cifar100_adversarial_predictions"
+# data = np.genfromtxt("data/cifar100_adversarial/%s.txt" % DATASET)# 10000*101
+
 
 score = data[:,1:]
 Y_predict = np.argmax(score, axis=1)
 Y_true = data[:,0]
+
+gam_ref = LogisticGAM(s(0, constraints='monotonic_inc')).gridsearch(
+                    np.max(score, axis=1).reshape(-1, 1),
+                    np.array(Y_true == Y_predict) * 1) # add a linear term
 
 
 def writecsv(result_dict, filename):
@@ -42,91 +50,59 @@ def writecsv(result_dict, filename):
         for key in result_dict.keys():
             f.write("%s,%s\n"%(key,",".join(["%.4f" % _ for _ in result_dict[key]])))
 
-ece_random = defaultdict(list)
-acc_random = defaultdict(list)
-ece_active_prb = defaultdict(list)
-acc_active_prb = defaultdict(list)
-ece_active_dtm = defaultdict(list)
-acc_active_dtm = defaultdict(list)
+ece_random_emp_multi = defaultdict(list)
+acc_random_emp_multi = defaultdict(list)
+mse_random_emp_multi = defaultdict(list)
+ece_random_unf_multi = defaultdict(list)
+acc_random_unf_multi = defaultdict(list)
+mse_random_unf_multi = defaultdict(list)
+ece_active_prb_multi = defaultdict(list)
+acc_active_prb_multi = defaultdict(list)
+mse_active_prb_multi = defaultdict(list)
+ece_active_dtm_multi = defaultdict(list)
+acc_active_dtm_multi = defaultdict(list)
+mse_active_dtm_multi = defaultdict(list)
 
 training_list = [i for i in range(data.shape[0])]
 
 for run_idx in tqdm(range(NUM_RUN)):
     
     subset_init = np.random.choice(training_list, size = NUM_SAMPLES[0], replace = False).tolist()
-    subset_random = []
-    subset_active_prb = []
-    subset_active_dtm = []
     
-    for idx in range(len(NUM_SAMPLES)):
-        # randomly select datapoints and feed to spline regression
-        # turn off plot
-        if idx == 0:
-            subset_random += subset_init
-        else:
-            n_inc = NUM_SAMPLES[idx] - NUM_SAMPLES[idx-1]
-            subset_random += np.random.choice([i for i in training_list if i not in subset_random], 
-                                      size = n_inc,
-                                      replace = False).tolist()
-        ece, acc, confi = spline_classification(np.max(score[subset_random], axis=1).reshape(-1, 1),
-                                                np.array(Y_true == Y_predict)[subset_random] * 1,
-                                                np.max(score, axis=1).reshape(-1, 1),
-                                                np.array(Y_true == Y_predict) * 1)
-        # confi not used in random selection
-        ece_random[NUM_SAMPLES[idx]].append(ece[0])
-        acc_random[NUM_SAMPLES[idx]].append(acc)  
+    ece_random_emp, acc_random_emp, mse_random_emp, subset_random_emp = active_learning(
+        score, Y_predict, Y_true, acq_random_emp, subset_init, training_list, NUM_SAMPLES, gam_ref)
+    ece_random_unf, acc_random_unf, mse_random_unf, subset_random_unf = active_learning(
+        score, Y_predict, Y_true, acq_random_unf, subset_init, training_list, NUM_SAMPLES, gam_ref)
+    ece_active_prb, acc_active_prb, mse_active_prb, subset_active_prb = active_learning(
+        score, Y_predict, Y_true, acq_active_prb, subset_init, training_list, NUM_SAMPLES, gam_ref)
+    ece_active_dtm, acc_active_dtm, mse_active_dtm, subset_active_dtm = active_learning(
+        score, Y_predict, Y_true, acq_active_dtm, subset_init, training_list, NUM_SAMPLES, gam_ref)
+    
+    for _ in NUM_SAMPLES:
+        ece_random_emp_multi[_].append(ece_random_emp[_])
+        acc_random_emp_multi[_].append(acc_random_emp[_])
+        mse_random_emp_multi[_].append(mse_random_emp[_])
+        ece_random_unf_multi[_].append(ece_random_unf[_])
+        acc_random_unf_multi[_].append(acc_random_unf[_])
+        mse_random_unf_multi[_].append(mse_random_unf[_])
+        ece_active_prb_multi[_].append(ece_active_prb[_])
+        acc_active_prb_multi[_].append(acc_active_prb[_])
+        mse_active_prb_multi[_].append(mse_active_prb[_])
+        ece_active_dtm_multi[_].append(ece_active_dtm[_])
+        acc_active_dtm_multi[_].append(acc_active_dtm[_])
+        mse_active_dtm_multi[_].append(mse_active_dtm[_])
+    
+    print len(subset_random_emp), len(subset_random_unf), len(subset_active_prb), len(subset_active_dtm)
         
-        
-        # randomly select datapoints and feed to spline regression
-        # data points are reweighted by uncertainty
-        if idx == 0:
-            subset_active_prb += subset_init
-        else:
-            n_inc = NUM_SAMPLES[idx] - NUM_SAMPLES[idx-1]
-            candidate_list = [i for i in training_list if i not in subset_active_prb]
-            p = weights[candidate_list,0] / weights[candidate_list].sum()
-            subset_active_prb += np.random.choice(candidate_list, 
-                                         size = n_inc,
-                                         replace = False,
-                                         p = p).tolist()
-        ece, acc, confi = spline_classification(np.max(score[subset_active_prb], axis=1).reshape(-1, 1),
-                                                np.array(Y_true == Y_predict)[subset_active_prb] * 1,
-                                                np.max(score, axis=1).reshape(-1, 1),
-                                                np.array(Y_true == Y_predict) * 1)
-        confi = sigmoid(confi) # 100 * 1
-        uncertainty = confi[:,1] - confi[:, 0]
-        # compute probablity of each datapoint
-        digitized = np.digitize(np.max(score, axis=1).reshape(-1, 1), 
-                                np.linspace(0, 1, 10)) -1
-        weights = uncertainty[digitized]
-        ece_active_prb[NUM_SAMPLES[idx]].append(ece[0])
-        acc_active_prb[NUM_SAMPLES[idx]].append(acc)
-        
-        # deterministically select datapoints and feed to spline regression
-        if idx == 0:
-            subset_active_dtm += subset_init
-        else:
-            n_inc = NUM_SAMPLES[idx] - NUM_SAMPLES[idx-1]
-            weights[subset_active_dtm] = 0
-            subset_active_dtm += heapq.nlargest(n_inc, range(len(weights)), weights.__getitem__)
-        ece, acc, confi = spline_classification(np.max(score[subset_active_dtm], axis=1).reshape(-1, 1),
-                                                np.array(Y_true == Y_predict)[subset_active_dtm] * 1,
-                                                np.max(score, axis=1).reshape(-1, 1),
-                                                np.array(Y_true == Y_predict) * 1)
-        confi = sigmoid(confi) # 100 * 1
-        uncertainty = confi[:,1] - confi[:, 0]
-        # compute probablity of each datapoint
-        digitized = np.digitize(np.max(score, axis=1).reshape(-1, 1), 
-                                np.linspace(0, 1, 10)) -1
-        weights = uncertainty[digitized]
-        ece_active_dtm[NUM_SAMPLES[idx]].append(ece[0])
-        acc_active_dtm[NUM_SAMPLES[idx]].append(acc)
-        
-        print len(subset_random), len(subset_active_prb), len(subset_active_dtm)
-        
-writecsv(ece_random, "output/%s/ece_random.csv" % DATASET)
-writecsv(acc_random, "output/%s/acc_random.csv" % DATASET)
-writecsv(ece_active_prb, "output/%s/ece_active_prb.csv" % DATASET)
-writecsv(acc_active_prb, "output/%s/acc_active_prb.csv" % DATASET)
-writecsv(ece_active_dtm, "output/%s/ece_active_dtm.csv" % DATASET)
-writecsv(acc_active_dtm, "output/%s/acc_active_dtm.csv" % DATASET)
+writecsv(ece_random_emp_multi, "output/%s/ece_random_emp.csv" % DATASET)
+writecsv(acc_random_emp_multi, "output/%s/acc_random_emp.csv" % DATASET)
+writecsv(mse_random_emp_multi, "output/%s/mse_random_emp.csv" % DATASET)
+writecsv(ece_random_unf_multi, "output/%s/ece_random_unf.csv" % DATASET)
+writecsv(acc_random_unf_multi, "output/%s/acc_random_unf.csv" % DATASET)
+writecsv(mse_random_unf_multi, "output/%s/mse_random_unf.csv" % DATASET)
+writecsv(ece_active_prb_multi, "output/%s/ece_active_prb.csv" % DATASET)
+writecsv(acc_active_prb_multi, "output/%s/acc_active_prb.csv" % DATASET)
+writecsv(mse_active_prb_multi, "output/%s/mse_active_prb.csv" % DATASET)
+writecsv(ece_active_dtm_multi, "output/%s/ece_active_dtm.csv" % DATASET)
+writecsv(acc_active_dtm_multi, "output/%s/acc_active_dtm.csv" % DATASET)
+writecsv(mse_active_dtm_multi, "output/%s/mse_active_dtm.csv" % DATASET)
