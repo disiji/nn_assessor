@@ -3,6 +3,7 @@ from sklearn.preprocessing import normalize
 from pygam import GAM, s, te
 from pygam import LogisticGAM, s, f, l
 from pygam.datasets import default
+from collections import defaultdict
 from sklearn.metrics import mean_squared_error
 
 def EceEval(p, y, num_bins):
@@ -46,3 +47,22 @@ def MseEval(gam1, gam2, num_bins):
     XX = np.linspace(0, 1, num_bins+1)
     mse = mean_squared_error(gam1.predict_proba(XX), gam2.predict_proba(XX))
     return mse
+
+
+######### load the results
+def LoadCsvFromOutput(filename):
+    """
+    INPUT:
+        filename:  a csv file. can be ece_random, ece_active, acc_random, 
+                    acc_active in this case.
+    OUTPUT:
+        result_dict: defaultdict(list). can be ece_random, ece_active, 
+                    acc_random, acc_active in this case.
+    """
+    import csv
+    result_dict = defaultdict(list)
+    with open(filename, 'r') as f:
+        for line in f.readlines():
+            line = line.split(",")
+            result_dict[int(line[0])].append([float(_) for _ in line[1:]])
+    return result_dict

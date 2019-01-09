@@ -24,7 +24,7 @@ def spline_classification_plot(ax, X, y, X_eval, y_eval, gam_ref):
     mse = MseEval(gam, gam_ref, num_bins = 100)
     y_predict = y_ > 0.5
     acc = (y_predict == y_eval).mean()
-    ax.text(0.05, 0.85, 'ECE=%.4f\nACC=%.4f\nMSE=%.4f'% (ece, acc, mse), size=6, ha='left', va='center',
+    ax.text(0.05, 0.80, 'ECE=%.4f\nACC=%.4f\nMSE=%.4f'% (ece, acc, mse), size=6, ha='left', va='center',
             bbox={'facecolor':'green', 'alpha':0.5, 'pad':4})
     ax.set_xlim(0.0, 1.0)
     ax.set_ylim(0.0, 1.0)

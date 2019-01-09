@@ -58,8 +58,8 @@ def active_learning_plot(score, Y_predict, Y_true, acq_func, subset_init, candid
     subset_list = []
 
     fig, ax = plt.subplots(nrows=5, ncols=5)
-    fig.set_figheight(8)
-    fig.set_figwidth(8)
+    fig.set_figheight(9)
+    fig.set_figwidth(9)
     
     for idx in range(len(NUM_SAMPLES)):
         if idx == 0:
