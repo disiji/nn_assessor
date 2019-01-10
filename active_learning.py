@@ -102,11 +102,34 @@ def acq_random_unf(n_inc, candidate_score, candidate_list, subset_list, confi=No
     return np.random.choice(candidate_list, size = n_inc, replace = False, p = p).tolist()
 
 
+def acq_random_ent(n_inc, candidate_score, candidate_list, subset_list, confi=None):
+    num_bins = NUM_BINS
+    bins = np.linspace(0, 1, num_bins+1)
+    digitized = np.digitize(candidate_score, bins[1:-1])
+    counter=collections.Counter(digitized.tolist())
+    weights = np.array([1.0/counter[digitized[_]] \
+                        * (bins[digitized[_]] + 0.5 / num_bins) \
+                        * (1- (bins[digitized[_]] + 0.5 / num_bins))  
+                        for _ in candidate_list])
+    weights[subset_list] = 0
+    p = weights / weights.sum()
+    return np.random.choice(candidate_list, size = n_inc, replace = False, p = p).tolist()
+
+
 def acq_active_prb(n_inc, candidate_score, candidate_list, subset_list, confi):
+    # print confi
     confi = sigmoid(confi) # 100 * 1
     weights = confi[:,1] - confi[:, 0]
+    # print weights
+    # print weights.shape
+    # print min(weights), "======"
+    # print (weights > 0).sum()
     weights[subset_list] = 0
-    p = weights/ weights.sum()
+    # print (weights > 0).sum()
+    # print sum(weights)
+    # print weights.sum()
+    p = weights  * 1.0 / weights.sum()
+    # print (p > 0).sum(), n_inc, len(candidate_list), p.shape[0]
     return np.random.choice(candidate_list, size = n_inc, replace = False, p = p).tolist()
 
 def acq_active_dtm(n_inc, candidate_score, candidate_list, subset_list, confi):

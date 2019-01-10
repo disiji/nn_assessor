@@ -15,9 +15,8 @@ def spline_classification_plot(ax, X, y, X_eval, y_eval, gam_ref):
     gam = LogisticGAM(s(0, constraints='monotonic_inc')).gridsearch(X, y) # add a linear term
     #XX = gam.generate_X_grid(term=0)
     XX = np.linspace(0, 1, 100)
-    pdep, confi_grid = gam.partial_dependence(term=0, width=.95)
-    ax.plot(XX, sigmoid(pdep))
-    ax.plot(XX, sigmoid(confi_grid), c='r', ls='--')
+    ax.plot(XX, gam.predict_proba(XX), c = 'g')
+    ax.plot(XX, gam.confidence_intervals(XX, width=0.95), c='r', ls='--')
     # compute ece and acc after calibration
     y_ = gam.predict_proba(X_eval)
     ece = EceEval(np.array([1-y_, y_]).T , y_eval, num_bins = 100)
