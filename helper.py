@@ -20,7 +20,7 @@ def EceEval(p, y, num_bins):
     bins = np.linspace(0, 1, num_bins+1)
     
     confidence = np.max(p, axis=1)
-    digitized = np.digitize(confidence, bins)
+    digitized = np.digitize(confidence, bins[1:-1])
     
     w = np.array([(digitized==i).sum() for i in range(num_bins)])
     w = normalize(w, norm='l1')

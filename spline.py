@@ -15,9 +15,9 @@ def spline_classification_plot(ax, X, y, X_eval, y_eval, gam_ref):
     gam = LogisticGAM(s(0, constraints='monotonic_inc')).gridsearch(X, y) # add a linear term
     #XX = gam.generate_X_grid(term=0)
     XX = np.linspace(0, 1, 100)
-    pdep, confi = gam.partial_dependence(term=0, width=.95)
+    pdep, confi_grid = gam.partial_dependence(term=0, width=.95)
     ax.plot(XX, sigmoid(pdep))
-    ax.plot(XX, sigmoid(confi), c='r', ls='--')
+    ax.plot(XX, sigmoid(confi_grid), c='r', ls='--')
     # compute ece and acc after calibration
     y_ = gam.predict_proba(X_eval)
     ece = EceEval(np.array([1-y_, y_]).T , y_eval, num_bins = 100)
@@ -30,6 +30,8 @@ def spline_classification_plot(ax, X, y, X_eval, y_eval, gam_ref):
     ax.set_ylim(0.0, 1.0)
 #     print gam.accuracy(X, y)
 #     print gam.summary()
+    # compute the confidence on datapoints of X_eval
+    confi = gam.confidence_intervals(X_eval, width=0.95)
     return ece, acc, mse, ax, confi
 
 def spline_classification(X, y, X_eval, y_eval, gam_ref):
@@ -37,25 +39,25 @@ def spline_classification(X, y, X_eval, y_eval, gam_ref):
     # documentation of LogisticGAM: https://pygam.readthedocs.io/en/latest/api/logisticgam.html
     gam = LogisticGAM(s(0, constraints='monotonic_inc')).gridsearch(X, y) # add a linear term
     #XX = gam.generate_X_grid(term=0)
-    XX = np.linspace(0, 1, 100)
-    pdep, confi = gam.partial_dependence(term=0, width=.95)
     # compute ece and acc after calibration
     y_ = gam.predict_proba(X_eval)
     ece = EceEval(np.array([1-y_, y_]).T , y_eval, num_bins = 100)
     mse = MseEval(gam, gam_ref, num_bins = 100)
     y_predict = y_ > 0.5
     acc = (y_predict == y_eval).mean()
+    # compute the confidence on datapoints of X_eval
+    confi = gam.confidence_intervals(X_eval, width=0.95)
     return ece, acc, mse, confi
 
-def get_spline_uncertainty(X, y):
-    # OUTPUT:
-    #     confi: dimensionality
-    # gam = LogisticGAM(s(0)).gridsearch(X, y)
-    # documentation of LogisticGAM: https://pygam.readthedocs.io/en/latest/api/logisticgam.html
-    gam = LogisticGAM(s(0, constraints='monotonic_inc')).gridsearch(X, y) # add a linear term
-    XX = np.linspace(0, 1, NUM_BINS+1)
-    pdep, confi = gam.partial_dependence(term=0, width=.95)
-    return confi
+# def get_spline_uncertainty(X, y):
+#     # OUTPUT:
+#     #     confi: dimensionality
+#     # gam = LogisticGAM(s(0)).gridsearch(X, y)
+#     # documentation of LogisticGAM: https://pygam.readthedocs.io/en/latest/api/logisticgam.html
+#     gam = LogisticGAM(s(0, constraints='monotonic_inc')).gridsearch(X, y) # add a linear term
+#     XX = np.linspace(0, 1, NUM_BINS+1)
+#     pdep, confi = gam.partial_dependence(term=0, width=.95)
+#     return confi
 
 def spline_calibration(X, y):
     gam = LogisticGAM(s(0, constraints='monotonic_inc')).gridsearch(X, y) # add a linear term

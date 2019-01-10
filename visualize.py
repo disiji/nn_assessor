@@ -222,7 +222,7 @@ def reliability_plot(ax, p, y, num_bins=10):
     bins = np.linspace(0, 1, num_bins+1)
     
     confidence = np.max(p, axis=1)
-    digitized = np.digitize(confidence, bins)
+    digitized = np.digitize(confidence, bins[1:-1])
     
     w = np.array([(digitized==i).sum() for i in range(1, num_bins+1)])
     w = normalize(w, norm='l1')
@@ -256,7 +256,7 @@ def reliability_plot_binary(ax, p, y, num_bins=10):
     Y_predict = p > 0.5
     Y_true = y
     bins = np.linspace(0, 1, num_bins+1)
-    digitized = np.digitize(p, bins)
+    digitized = np.digitize(p, bins[1:-1])
     
     w = np.array([(digitized==i).sum() for i in range(1, num_bins+1)])
     w = normalize(w, norm='l1')
@@ -290,7 +290,7 @@ def reliability_plot_binary(ax, p, y, num_bins=10):
 # plot Brightness v.s. accuracy
 def brightness_plot_binary(ax, brightness, Y_predicted, Y_true, num_bins=10):
     bins = np.linspace(brightness.min(), brightness.max(), num_bins+1)
-    digitized = np.digitize(brightness, bins)
+    digitized = np.digitize(brightness, bins[1:-1])
     brightness_bins = np.array([brightness[digitized==i].mean() for i in range(1, num_bins+1)])
     accuracy_bins = np.array([(Y_true[digitized==i]==Y_predicted[digitized==i]).mean() for i in range(1, num_bins+1)])
     
@@ -337,6 +337,7 @@ def plot_metric_single_run(ece_random_emp, acc_random_emp, mse_random_emp,\
                  c = 'c', label="Random_Unf")
     ax[1].set_xlabel("#datapoints")
     ax[1].set_ylabel("Accuracy")
+    ax[1].legend()
     ax[2].plot(NUM_SAMPLES, 
                  [mse_active_prb[_] for _ in NUM_SAMPLES], 
                  c = 'r', label="Active_Prb")
@@ -351,6 +352,7 @@ def plot_metric_single_run(ece_random_emp, acc_random_emp, mse_random_emp,\
                  c = 'c', label="Random_Unf")
     ax[2].set_xlabel("#datapoints")
     ax[2].set_ylabel("MSE from GAM_ref")
+    ax[2].legend()
     plt.rc('legend',**{'fontsize':12})
     fig.tight_layout()
 

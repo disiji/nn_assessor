@@ -94,7 +94,7 @@ def acq_random_emp(n_inc, candidate_score, candidate_list, subset_list, confi=No
 def acq_random_unf(n_inc, candidate_score, candidate_list, subset_list, confi=None):
     num_bins = NUM_BINS
     bins = np.linspace(0, 1, num_bins+1)
-    digitized = np.digitize(candidate_score, bins)
+    digitized = np.digitize(candidate_score, bins[1:-1])
     counter=collections.Counter(digitized.tolist())
     weights = np.array([1.0/counter[digitized[_]] for _ in candidate_list])
     weights[subset_list] = 0
@@ -104,9 +104,7 @@ def acq_random_unf(n_inc, candidate_score, candidate_list, subset_list, confi=No
 
 def acq_active_prb(n_inc, candidate_score, candidate_list, subset_list, confi):
     confi = sigmoid(confi) # 100 * 1
-    uncertainty = confi[:,1] - confi[:, 0]
-    digitized = np.digitize(candidate_score, np.linspace(0, 1, 100)) -1
-    weights = uncertainty[digitized]
+    weights = confi[:,1] - confi[:, 0]
     weights[subset_list] = 0
     p = weights/ weights.sum()
     return np.random.choice(candidate_list, size = n_inc, replace = False, p = p).tolist()
@@ -114,8 +112,6 @@ def acq_active_prb(n_inc, candidate_score, candidate_list, subset_list, confi):
 def acq_active_dtm(n_inc, candidate_score, candidate_list, subset_list, confi):
     import heapq
     confi = sigmoid(confi) # 100 * 1
-    uncertainty = confi[:,1] - confi[:, 0]
-    digitized = np.digitize(candidate_score, np.linspace(0, 1, 100)) -1
-    weights = uncertainty[digitized]
+    weights = confi[:,1] - confi[:, 0]
     weights[subset_list] = 0
     return heapq.nlargest(n_inc, range(len(weights)), weights.__getitem__)
