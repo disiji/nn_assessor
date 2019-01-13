@@ -25,10 +25,10 @@ print len(NUM_SAMPLES)
 
 # DATASET = "cifar100_predictions_dropout"
 # data = np.genfromtxt("data/cifar100/%s.txt" % DATASET)# 10000*101
-DATASET = "svhn_predictions"
-data = np.genfromtxt("data/svhn/%s.txt" % DATASET)
-# DATASET = "cifar100_adversarial_predictions"
-# data = np.genfromtxt("data/cifar100_adversarial/%s.txt" % DATASET)# 10000*101
+# DATASET = "svhn_predictions"
+# data = np.genfromtxt("data/svhn/%s.txt" % DATASET)
+DATASET = "cifar100_adversarial_predictions"
+data = np.genfromtxt("data/cifar100_adversarial/%s.txt" % DATASET)# 10000*101
 
 
 score = data[:,1:]
@@ -51,15 +51,32 @@ def writecsv(result_dict, filename):
             f.write("%s,%s\n"%(key,",".join(["%.4f" % _ for _ in result_dict[key]])))
 
 ece_random_emp_multi = defaultdict(list)
+mce_random_emp_multi = defaultdict(list)
+brier_random_emp_multi = defaultdict(list)
 acc_random_emp_multi = defaultdict(list)
 mse_random_emp_multi = defaultdict(list)
+
 ece_random_unf_multi = defaultdict(list)
+mce_random_unf_multi = defaultdict(list)
+brier_random_unf_multi = defaultdict(list)
 acc_random_unf_multi = defaultdict(list)
 mse_random_unf_multi = defaultdict(list)
+
+ece_random_ent_multi = defaultdict(list)
+mce_random_ent_multi = defaultdict(list)
+brier_random_ent_multi = defaultdict(list)
+acc_random_ent_multi = defaultdict(list)
+mse_random_ent_multi = defaultdict(list)
+
 ece_active_prb_multi = defaultdict(list)
+mce_active_prb_multi = defaultdict(list)
+brier_active_prb_multi = defaultdict(list)
 acc_active_prb_multi = defaultdict(list)
 mse_active_prb_multi = defaultdict(list)
+
 ece_active_dtm_multi = defaultdict(list)
+mce_active_dtm_multi = defaultdict(list)
+brier_active_dtm_multi = defaultdict(list)
 acc_active_dtm_multi = defaultdict(list)
 mse_active_dtm_multi = defaultdict(list)
 
@@ -69,40 +86,76 @@ for run_idx in tqdm(range(NUM_RUN)):
     
     subset_init = np.random.choice(training_list, size = NUM_SAMPLES[0], replace = False).tolist()
     
-    ece_random_emp, acc_random_emp, mse_random_emp, subset_random_emp = active_learning(
+    ece_random_emp, mce_random_emp, brier_random_emp, acc_random_emp, mse_random_emp, subset_random_emp = active_learning(
         score, Y_predict, Y_true, acq_random_emp, subset_init, training_list, NUM_SAMPLES, gam_ref)
-    ece_random_unf, acc_random_unf, mse_random_unf, subset_random_unf = active_learning(
+    ece_random_unf, mce_random_unf, brier_random_unf, acc_random_unf, mse_random_unf, subset_random_unf = active_learning(
         score, Y_predict, Y_true, acq_random_unf, subset_init, training_list, NUM_SAMPLES, gam_ref)
-    ece_active_prb, acc_active_prb, mse_active_prb, subset_active_prb = active_learning(
+    ece_random_ent, mce_random_ent, brier_random_ent, acc_random_ent, mse_random_ent, subset_random_ent = active_learning(
+        score, Y_predict, Y_true, acq_random_ent, subset_init, training_list, NUM_SAMPLES, gam_ref)
+    ece_active_prb, mce_active_prb, brier_active_prb, acc_active_prb, mse_active_prb, subset_active_prb = active_learning(
         score, Y_predict, Y_true, acq_active_prb, subset_init, training_list, NUM_SAMPLES, gam_ref)
-    ece_active_dtm, acc_active_dtm, mse_active_dtm, subset_active_dtm = active_learning(
+    ece_active_dtm, mce_active_dtm, brier_active_dtm, acc_active_dtm, mse_active_dtm, subset_active_dtm = active_learning(
         score, Y_predict, Y_true, acq_active_dtm, subset_init, training_list, NUM_SAMPLES, gam_ref)
     
     for _ in NUM_SAMPLES:
         ece_random_emp_multi[_].append(ece_random_emp[_])
+        mce_random_emp_multi[_].append(mce_random_emp[_])
+        brier_random_emp_multi[_].append(brier_random_emp[_])
         acc_random_emp_multi[_].append(acc_random_emp[_])
         mse_random_emp_multi[_].append(mse_random_emp[_])
+        
         ece_random_unf_multi[_].append(ece_random_unf[_])
+        mce_random_unf_multi[_].append(mce_random_unf[_])
+        brier_random_unf_multi[_].append(brier_random_unf[_])
         acc_random_unf_multi[_].append(acc_random_unf[_])
         mse_random_unf_multi[_].append(mse_random_unf[_])
+
+        ece_random_ent_multi[_].append(ece_random_ent[_])
+        mce_random_ent_multi[_].append(mce_random_ent[_])
+        brier_random_ent_multi[_].append(brier_random_ent[_])
+        acc_random_ent_multi[_].append(acc_random_ent[_])
+        mse_random_ent_multi[_].append(mse_random_ent[_])
+        
         ece_active_prb_multi[_].append(ece_active_prb[_])
+        mce_active_prb_multi[_].append(mce_active_prb[_])
+        brier_active_prb_multi[_].append(brier_active_prb[_])
         acc_active_prb_multi[_].append(acc_active_prb[_])
         mse_active_prb_multi[_].append(mse_active_prb[_])
+        
         ece_active_dtm_multi[_].append(ece_active_dtm[_])
+        mce_active_dtm_multi[_].append(mce_active_dtm[_])
+        brier_active_dtm_multi[_].append(brier_active_dtm[_])
         acc_active_dtm_multi[_].append(acc_active_dtm[_])
         mse_active_dtm_multi[_].append(mse_active_dtm[_])
     
-    print len(subset_random_emp), len(subset_random_unf), len(subset_active_prb), len(subset_active_dtm)
+    print len(subset_random_emp), len(subset_random_unf), len(subset_random_ent), len(subset_active_prb), len(subset_active_dtm)
         
 writecsv(ece_random_emp_multi, "output/%s/ece_random_emp.csv" % DATASET)
+writecsv(mce_random_emp_multi, "output/%s/mce_random_emp.csv" % DATASET)
+writecsv(brier_random_emp_multi, "output/%s/brier_random_emp.csv" % DATASET)
 writecsv(acc_random_emp_multi, "output/%s/acc_random_emp.csv" % DATASET)
 writecsv(mse_random_emp_multi, "output/%s/mse_random_emp.csv" % DATASET)
+
 writecsv(ece_random_unf_multi, "output/%s/ece_random_unf.csv" % DATASET)
+writecsv(mce_random_unf_multi, "output/%s/mce_random_unf.csv" % DATASET)
+writecsv(brier_random_unf_multi, "output/%s/brier_random_unf.csv" % DATASET)
 writecsv(acc_random_unf_multi, "output/%s/acc_random_unf.csv" % DATASET)
 writecsv(mse_random_unf_multi, "output/%s/mse_random_unf.csv" % DATASET)
+
+writecsv(ece_random_ent_multi, "output/%s/ece_random_ent.csv" % DATASET)
+writecsv(mce_random_ent_multi, "output/%s/mce_random_ent.csv" % DATASET)
+writecsv(brier_random_ent_multi, "output/%s/brier_random_ent.csv" % DATASET)
+writecsv(acc_random_ent_multi, "output/%s/acc_random_ent.csv" % DATASET)
+writecsv(mse_random_ent_multi, "output/%s/mse_random_ent.csv" % DATASET)
+
 writecsv(ece_active_prb_multi, "output/%s/ece_active_prb.csv" % DATASET)
+writecsv(mce_active_prb_multi, "output/%s/mce_active_prb.csv" % DATASET)
+writecsv(brier_active_prb_multi, "output/%s/brier_active_prb.csv" % DATASET)
 writecsv(acc_active_prb_multi, "output/%s/acc_active_prb.csv" % DATASET)
 writecsv(mse_active_prb_multi, "output/%s/mse_active_prb.csv" % DATASET)
+
 writecsv(ece_active_dtm_multi, "output/%s/ece_active_dtm.csv" % DATASET)
+writecsv(mce_active_dtm_multi, "output/%s/mce_active_dtm.csv" % DATASET)
+writecsv(brier_active_dtm_multi, "output/%s/brier_active_dtm.csv" % DATASET)
 writecsv(acc_active_dtm_multi, "output/%s/acc_active_dtm.csv" % DATASET)
 writecsv(mse_active_dtm_multi, "output/%s/mse_active_dtm.csv" % DATASET)

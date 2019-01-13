@@ -199,7 +199,7 @@ def gpc_gpy(ax, x, y, kernel=None):
     y_predict = y_ > 0.5
     acc = (y_predict == y).mean()
     
-    ax.text(0.05, 0.8, 'ECE=%.4f\nACC=%.4f'% (ece, acc), size=14, ha='left', va='center',
+    ax.text(0.05, 0.70, 'ECE=%.4f\nACC=%.4f'% (ece, acc), size=14, ha='left', va='center',
             bbox={'facecolor':'green', 'alpha':0.5, 'pad':4})
     
     return ax
@@ -300,14 +300,14 @@ def brightness_plot_binary(ax, brightness, Y_predicted, Y_true, num_bins=10):
     return ax
 
 
-def plot_metric_single_run(ece_random_emp, acc_random_emp, mse_random_emp,\
-                          ece_random_unf, acc_random_unf, mse_random_unf,\
-                          ece_active_prb, acc_active_prb, mse_active_prb,\
-                          ece_active_dtm, acc_active_dtm, mse_active_dtm, NUM_SAMPLES):
-    fig, ax = plt.subplots(nrows=1, ncols=3)
+def plot_metric_single_run(ece_random_emp, mce_random_emp, brier_random_emp, acc_random_emp, mse_random_emp,\
+                          ece_random_unf, mce_random_unf, brier_random_unf, acc_random_unf, mse_random_unf,\
+                          ece_random_ent, mce_random_ent, brier_random_ent, acc_random_ent, mse_random_ent,\
+                          ece_active_prb, mce_active_prb, brier_active_prb, acc_active_prb, mse_active_prb,\
+                          ece_active_dtm, mce_active_dtm, brier_active_dtm, acc_active_dtm, mse_active_dtm, NUM_SAMPLES):
+    fig, ax = plt.subplots(nrows=1, ncols=5)
     fig.set_figheight(3)
-    fig.set_figwidth(10)
-    plt.figure(figsize = (4,3))
+    fig.set_figwidth(16)
     ax[0].plot(NUM_SAMPLES, 
                  [ece_active_prb[_] for _ in NUM_SAMPLES], 
                  c = 'r', label="Active_Prb")
@@ -320,8 +320,11 @@ def plot_metric_single_run(ece_random_emp, acc_random_emp, mse_random_emp,\
     ax[0].plot(NUM_SAMPLES, 
                  [ece_random_unf[_] for _ in NUM_SAMPLES], 
                  c = 'c', label="Random_Unf")
+    ax[0].plot(NUM_SAMPLES, 
+                 [ece_random_ent[_] for _ in NUM_SAMPLES], 
+                 c = 'm', label="Random_Ent")
     ax[0].set_xlabel("#datapoints")
-    ax[0].set_ylabel("ECE")
+    ax[0].set_title("ECE")
     ax[0].legend()
     ax[1].plot(NUM_SAMPLES, 
                  [acc_active_prb[_] for _ in NUM_SAMPLES], 
@@ -335,8 +338,11 @@ def plot_metric_single_run(ece_random_emp, acc_random_emp, mse_random_emp,\
     ax[1].plot(NUM_SAMPLES, 
                  [acc_random_unf[_] for _ in NUM_SAMPLES],
                  c = 'c', label="Random_Unf")
+    ax[1].plot(NUM_SAMPLES, 
+                 [acc_random_ent[_] for _ in NUM_SAMPLES],
+                 c = 'm', label="Random_Ent")
     ax[1].set_xlabel("#datapoints")
-    ax[1].set_ylabel("Accuracy")
+    ax[1].set_title("Accuracy")
     ax[1].legend()
     ax[2].plot(NUM_SAMPLES, 
                  [mse_active_prb[_] for _ in NUM_SAMPLES], 
@@ -350,21 +356,64 @@ def plot_metric_single_run(ece_random_emp, acc_random_emp, mse_random_emp,\
     ax[2].plot(NUM_SAMPLES, 
                  [mse_random_unf[_] for _ in NUM_SAMPLES],
                  c = 'c', label="Random_Unf")
+    ax[2].plot(NUM_SAMPLES, 
+                 [mse_random_ent[_] for _ in NUM_SAMPLES],
+                 c = 'm', label="Random_Ent")
     ax[2].set_xlabel("#datapoints")
-    ax[2].set_ylabel("MSE from GAM_ref")
+    ax[2].set_title("MSE from GAM_ref")
     ax[2].legend()
-    plt.rc('legend',**{'fontsize':12})
+    ax[3].plot(NUM_SAMPLES, 
+                 [mce_active_prb[_] for _ in NUM_SAMPLES], 
+                 c = 'r', label="Active_Prb")
+    ax[3].plot(NUM_SAMPLES, 
+                 [mce_active_dtm[_] for _ in NUM_SAMPLES], 
+                 c = 'g', label="Active_Dtm")
+    ax[3].plot(NUM_SAMPLES, 
+                 [mce_random_emp[_] for _ in NUM_SAMPLES],
+                 c = 'b', label="Random_Emp")
+    ax[3].plot(NUM_SAMPLES, 
+                 [mce_random_unf[_] for _ in NUM_SAMPLES],
+                 c = 'c', label="Random_Unf")
+    ax[3].plot(NUM_SAMPLES, 
+                 [mce_random_ent[_] for _ in NUM_SAMPLES],
+                 c = 'm', label="Random_Ent")
+    ax[3].set_xlabel("#datapoints")
+    ax[3].set_title("MCE")
+    ax[3].legend()
+    ax[4].plot(NUM_SAMPLES, 
+                 [brier_active_prb[_] for _ in NUM_SAMPLES], 
+                 c = 'r', label="Active_Prb")
+    ax[4].plot(NUM_SAMPLES, 
+                 [brier_active_dtm[_] for _ in NUM_SAMPLES], 
+                 c = 'g', label="Active_Dtm")
+    ax[4].plot(NUM_SAMPLES, 
+                 [brier_random_emp[_] for _ in NUM_SAMPLES],
+                 c = 'b', label="Random_Emp")
+    ax[4].plot(NUM_SAMPLES, 
+                 [brier_random_unf[_] for _ in NUM_SAMPLES],
+                 c = 'c', label="Random_Unf")
+    ax[4].plot(NUM_SAMPLES, 
+                 [brier_random_ent[_] for _ in NUM_SAMPLES],
+                 c = 'm', label="Random_Ent")
+    ax[4].set_xlabel("#datapoints")
+    ax[4].set_title("Brier Score")
+    ax[4].legend()
+    plt.rc('legend',**{'fontsize':6})
     fig.tight_layout()
+    plt.show()
 
 
-def plot_metric_multi_run(ece_random_emp_multi_run, acc_random_emp_multi_run, mse_random_emp_multi_run,\
-                   ece_random_unf_multi_run, acc_random_unf_multi_run, mse_random_unf_multi_run,\
-                   ece_active_prb_multi_run, acc_active_prb_multi_run, mse_active_prb_multi_run,\
-                   ece_active_dtm_multi_run, acc_active_dtm_multi_run, mse_active_dtm_multi_run,
-                   NUM_SAMPLES):
-    fig, ax = plt.subplots(nrows=1, ncols=3)
+def plot_metric_multi_run(
+    ece_random_emp_multi_run, mce_random_emp_multi_run, brier_random_emp_multi_run, acc_random_emp_multi_run, mse_random_emp_multi_run,\
+    ece_random_unf_multi_run, mce_random_unf_multi_run, brier_random_unf_multi_run, acc_random_unf_multi_run, mse_random_unf_multi_run,\
+    ece_random_ent_multi_run, mce_random_ent_multi_run, brier_random_ent_multi_run, acc_random_ent_multi_run, mse_random_ent_multi_run,\
+    ece_active_prb_multi_run, mce_active_prb_multi_run, brier_active_prb_multi_run, acc_active_prb_multi_run, mse_active_prb_multi_run,\
+    ece_active_dtm_multi_run, mce_active_dtm_multi_run, brier_active_dtm_multi_run, acc_active_dtm_multi_run, mse_active_dtm_multi_run,
+    NUM_SAMPLES):
+    
+    fig, ax = plt.subplots(nrows=1, ncols=5)
     fig.set_figheight(3)
-    fig.set_figwidth(10)
+    fig.set_figwidth(16)
     ax[0].errorbar(NUM_SAMPLES, 
                  [np.mean(ece_active_prb_multi_run[_]) for _ in NUM_SAMPLES], 
                  yerr = [np.std(ece_active_prb_multi_run[_]) for _ in NUM_SAMPLES],
@@ -381,8 +430,12 @@ def plot_metric_multi_run(ece_random_emp_multi_run, acc_random_emp_multi_run, ms
                  [np.mean(ece_random_unf_multi_run[_]) for _ in NUM_SAMPLES], 
                  yerr = [np.std(ece_random_unf_multi_run[_]) for _ in NUM_SAMPLES],
                  c = 'c', label="Random_Unf")
+    ax[0].errorbar(NUM_SAMPLES, 
+                 [np.mean(ece_random_ent_multi_run[_]) for _ in NUM_SAMPLES], 
+                 yerr = [np.std(ece_random_ent_multi_run[_]) for _ in NUM_SAMPLES],
+                 c = 'm', label="Random_Ent")
     ax[0].set_xlabel("#datapoints")
-    ax[0].set_ylabel("ECE")
+    ax[0].set_title("ECE")
     ax[0].legend()
     ax[1].errorbar(NUM_SAMPLES, 
                  [np.mean(acc_active_prb_multi_run[_]) for _ in NUM_SAMPLES], 
@@ -400,8 +453,12 @@ def plot_metric_multi_run(ece_random_emp_multi_run, acc_random_emp_multi_run, ms
                  [np.mean(acc_random_unf_multi_run[_]) for _ in NUM_SAMPLES], 
                  yerr = [np.std(acc_random_unf_multi_run[_]) for _ in NUM_SAMPLES],
                  c = 'c', label="Random_Unf")
+    ax[1].errorbar(NUM_SAMPLES, 
+                 [np.mean(acc_random_ent_multi_run[_]) for _ in NUM_SAMPLES], 
+                 yerr = [np.std(acc_random_ent_multi_run[_]) for _ in NUM_SAMPLES],
+                 c = 'm', label="Random_Ent")
     ax[1].set_xlabel("#datapoints")
-    ax[1].set_ylabel("Accuracy")
+    ax[1].set_title("Accuracy")
     ax[1].legend()
     ax[2].errorbar(NUM_SAMPLES, 
                  [np.mean(mse_active_prb_multi_run[_]) for _ in NUM_SAMPLES], 
@@ -419,8 +476,58 @@ def plot_metric_multi_run(ece_random_emp_multi_run, acc_random_emp_multi_run, ms
                  [np.mean(mse_random_unf_multi_run[_]) for _ in NUM_SAMPLES], 
                  yerr = [np.std(mse_random_unf_multi_run[_]) for _ in NUM_SAMPLES],
                  c = 'c', label="Random_Unf")
+    ax[2].errorbar(NUM_SAMPLES, 
+                 [np.mean(mse_random_ent_multi_run[_]) for _ in NUM_SAMPLES], 
+                 yerr = [np.std(mse_random_ent_multi_run[_]) for _ in NUM_SAMPLES],
+                 c = 'm', label="Random_Ent")
     ax[2].set_xlabel("#datapoints")
-    ax[2].set_ylabel("MSE from GAM_ref")
+    ax[2].set_title("MSE from GAM_ref")
     ax[2].legend()
-    plt.rc('legend',**{'fontsize':12})
+    ax[3].errorbar(NUM_SAMPLES, 
+                 [np.mean(mce_active_prb_multi_run[_]) for _ in NUM_SAMPLES], 
+                 yerr = [np.std(mce_active_prb_multi_run[_]) for _ in NUM_SAMPLES],
+                 c = 'r', label="Active_Prb")
+    ax[3].errorbar(NUM_SAMPLES, 
+                 [np.mean(mce_active_dtm_multi_run[_]) for _ in NUM_SAMPLES], 
+                 yerr = [np.std(mce_active_dtm_multi_run[_]) for _ in NUM_SAMPLES],
+                 c = 'g', label="Active_Dtm")
+    ax[3].errorbar(NUM_SAMPLES, 
+                 [np.mean(mce_random_emp_multi_run[_]) for _ in NUM_SAMPLES], 
+                 yerr = [np.std(mce_random_emp_multi_run[_]) for _ in NUM_SAMPLES],
+                 c = 'b', label="Random_Emp")
+    ax[3].errorbar(NUM_SAMPLES, 
+                 [np.mean(mce_random_unf_multi_run[_]) for _ in NUM_SAMPLES], 
+                 yerr = [np.std(mce_random_unf_multi_run[_]) for _ in NUM_SAMPLES],
+                 c = 'c', label="Random_Unf")
+    ax[3].errorbar(NUM_SAMPLES, 
+                 [np.mean(mce_random_ent_multi_run[_]) for _ in NUM_SAMPLES], 
+                 yerr = [np.std(mce_random_ent_multi_run[_]) for _ in NUM_SAMPLES],
+                 c = 'm', label="Random_Ent")
+    ax[3].set_xlabel("#datapoints")
+    ax[3].set_title("MCE")
+    ax[3].legend()
+    ax[4].errorbar(NUM_SAMPLES, 
+                 [np.mean(brier_active_prb_multi_run[_]) for _ in NUM_SAMPLES], 
+                 yerr = [np.std(brier_active_prb_multi_run[_]) for _ in NUM_SAMPLES],
+                 c = 'r', label="Active_Prb")
+    ax[4].errorbar(NUM_SAMPLES, 
+                 [np.mean(brier_active_dtm_multi_run[_]) for _ in NUM_SAMPLES], 
+                 yerr = [np.std(brier_active_dtm_multi_run[_]) for _ in NUM_SAMPLES],
+                 c = 'g', label="Active_Dtm")
+    ax[4].errorbar(NUM_SAMPLES, 
+                 [np.mean(brier_random_emp_multi_run[_]) for _ in NUM_SAMPLES], 
+                 yerr = [np.std(brier_random_emp_multi_run[_]) for _ in NUM_SAMPLES],
+                 c = 'b', label="Random_Emp")
+    ax[4].errorbar(NUM_SAMPLES, 
+                 [np.mean(brier_random_unf_multi_run[_]) for _ in NUM_SAMPLES], 
+                 yerr = [np.std(brier_random_unf_multi_run[_]) for _ in NUM_SAMPLES],
+                 c = 'c', label="Random_Unf")
+    ax[4].errorbar(NUM_SAMPLES, 
+                 [np.mean(brier_random_ent_multi_run[_]) for _ in NUM_SAMPLES], 
+                 yerr = [np.std(brier_random_ent_multi_run[_]) for _ in NUM_SAMPLES],
+                 c = 'm', label="Random_Ent")
+    ax[4].set_xlabel("#datapoints")
+    ax[4].set_title("Brier Score")
+    ax[4].legend()
+    plt.rc('legend',**{'fontsize':6})
     fig.tight_layout()

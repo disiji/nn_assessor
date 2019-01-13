@@ -27,6 +27,8 @@ print len(NUM_SAMPLES) # should not exceed 25 because the number of subplots is 
 def active_learning(score, Y_predict, Y_true, acq_func, subset_init, candidate_list, NUM_SAMPLES, gam_ref):
     
     ece_dict = dict()
+    mce_dict = dict()
+    brier_dict = dict()
     acc_dict = dict()
     mse_dict = dict()
     subset_list = []
@@ -37,22 +39,26 @@ def active_learning(score, Y_predict, Y_true, acq_func, subset_init, candidate_l
         else:
             n_inc = NUM_SAMPLES[idx] - NUM_SAMPLES[idx-1]
             subset_list += acq_func(n_inc, np.max(score, axis=1), candidate_list, subset_list, confi)
-        ece, acc, mse, confi = spline_classification(
+        ece, mce, brier, acc, mse, confi = spline_classification(
                                     np.max(score[subset_list], axis=1).reshape(-1, 1),
                                     np.array(Y_true == Y_predict)[subset_list] * 1,
                                     np.max(score, axis=1).reshape(-1, 1),
                                     np.array(Y_true == Y_predict) * 1,
                                     gam_ref)
         ece_dict[NUM_SAMPLES[idx]] = ece[0]
+        mce_dict[NUM_SAMPLES[idx]] = mce
+        brier_dict[NUM_SAMPLES[idx]] = brier
         acc_dict[NUM_SAMPLES[idx]] = acc
         mse_dict[NUM_SAMPLES[idx]] = mse
     
-    return ece_dict, acc_dict, mse_dict, subset_list
+    return ece_dict, mce_dict, brier_dict, acc_dict, mse_dict, subset_list
 
 
 def active_learning_plot(score, Y_predict, Y_true, acq_func, subset_init, candidate_list, NUM_SAMPLES, gam_ref):
     
     ece_dict = dict()
+    mce_dict = dict()
+    brier_dict = dict()
     acc_dict = dict()
     mse_dict = dict()
     subset_list = []
@@ -67,7 +73,7 @@ def active_learning_plot(score, Y_predict, Y_true, acq_func, subset_init, candid
         else:
             n_inc = NUM_SAMPLES[idx] - NUM_SAMPLES[idx-1]
             subset_list += acq_func(n_inc, np.max(score, axis=1), candidate_list, subset_list, confi)
-        ece, acc, mse, ax[idx / NUM_COL, idx % NUM_COL], confi = \
+        ece, mce, brier, acc, mse, ax[idx / NUM_COL, idx % NUM_COL], confi = \
                                     spline_classification_plot(ax[idx / NUM_COL, idx % NUM_COL],
                                     np.max(score[subset_list], axis=1).reshape(-1, 1),
                                     np.array(Y_true == Y_predict)[subset_list] * 1,
@@ -76,11 +82,13 @@ def active_learning_plot(score, Y_predict, Y_true, acq_func, subset_init, candid
                                     gam_ref)
         ax[idx / NUM_COL, idx % NUM_COL].set_xlabel("N=%d" % NUM_SAMPLES[idx])
         ece_dict[NUM_SAMPLES[idx]] = ece[0]
+        mce_dict[NUM_SAMPLES[idx]] = mce
+        brier_dict[NUM_SAMPLES[idx]] = brier
         acc_dict[NUM_SAMPLES[idx]] = acc
         mse_dict[NUM_SAMPLES[idx]] = mse
     fig.tight_layout()
     
-    return ece_dict, acc_dict, mse_dict, subset_list
+    return ece_dict, mce_dict, brier_dict, acc_dict, mse_dict, subset_list
 
 
 ### different acquisition functions
@@ -117,19 +125,10 @@ def acq_random_ent(n_inc, candidate_score, candidate_list, subset_list, confi=No
 
 
 def acq_active_prb(n_inc, candidate_score, candidate_list, subset_list, confi):
-    # print confi
     confi = sigmoid(confi) # 100 * 1
     weights = confi[:,1] - confi[:, 0]
-    # print weights
-    # print weights.shape
-    # print min(weights), "======"
-    # print (weights > 0).sum()
     weights[subset_list] = 0
-    # print (weights > 0).sum()
-    # print sum(weights)
-    # print weights.sum()
     p = weights  * 1.0 / weights.sum()
-    # print (p > 0).sum(), n_inc, len(candidate_list), p.shape[0]
     return np.random.choice(candidate_list, size = n_inc, replace = False, p = p).tolist()
 
 def acq_active_dtm(n_inc, candidate_score, candidate_list, subset_list, confi):
