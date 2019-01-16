@@ -26,67 +26,85 @@ print len(NUM_SAMPLES) # should not exceed 25 because the number of subplots is 
 
 def active_learning(score, Y_predict, Y_true, acq_func, subset_init, candidate_list, NUM_SAMPLES, gam_ref):
     
-    ece_dict = dict()
-    mce_dict = dict()
-    brier_dict = dict()
-    acc_dict = dict()
-    mse_dict = dict()
-    subset_list = []
-    
-    for idx in range(len(NUM_SAMPLES)):
-        if idx == 0:
-            subset_list += subset_init
-        else:
-            n_inc = NUM_SAMPLES[idx] - NUM_SAMPLES[idx-1]
-            subset_list += acq_func(n_inc, np.max(score, axis=1), candidate_list, subset_list, confi)
-        ece, mce, brier, acc, mse, confi = spline_classification(
-                                    np.max(score[subset_list], axis=1).reshape(-1, 1),
-                                    np.array(Y_true == Y_predict)[subset_list] * 1,
-                                    np.max(score, axis=1).reshape(-1, 1),
-                                    np.array(Y_true == Y_predict) * 1,
-                                    gam_ref)
-        ece_dict[NUM_SAMPLES[idx]] = ece[0]
-        mce_dict[NUM_SAMPLES[idx]] = mce
-        brier_dict[NUM_SAMPLES[idx]] = brier
-        acc_dict[NUM_SAMPLES[idx]] = acc
-        mse_dict[NUM_SAMPLES[idx]] = mse
+    should_restart = True
+    while should_restart:
+        should_restart = False
+        
+        ece_dict = dict()
+        mce_dict = dict()
+        brier_dict = dict()
+        acc_dict = dict()
+        mse_dict = dict()
+        subset_list = []
+
+        for idx in range(len(NUM_SAMPLES)):
+            if idx == 0:
+                subset_list += subset_init
+            else:
+                n_inc = NUM_SAMPLES[idx] - NUM_SAMPLES[idx-1]
+                if np.isnan(confi).any():
+                    # should_restart = True
+                    # break
+                    confi[:,0] = 0
+                    confi[:,1] = 1
+                subset_list += acq_func(n_inc, np.max(score, axis=1), candidate_list, subset_list, confi)
+            ece, mce, brier, acc, mse, confi = spline_classification(
+                                        np.max(score[subset_list], axis=1).reshape(-1, 1),
+                                        np.array(Y_true == Y_predict)[subset_list] * 1,
+                                        np.max(score, axis=1).reshape(-1, 1),
+                                        np.array(Y_true == Y_predict) * 1,
+                                        gam_ref)
+            ece_dict[NUM_SAMPLES[idx]] = ece[0]
+            mce_dict[NUM_SAMPLES[idx]] = mce
+            brier_dict[NUM_SAMPLES[idx]] = brier
+            acc_dict[NUM_SAMPLES[idx]] = acc
+            mse_dict[NUM_SAMPLES[idx]] = mse
     
     return ece_dict, mce_dict, brier_dict, acc_dict, mse_dict, subset_list
 
 
 def active_learning_plot(score, Y_predict, Y_true, acq_func, subset_init, candidate_list, NUM_SAMPLES, gam_ref):
-    
-    ece_dict = dict()
-    mce_dict = dict()
-    brier_dict = dict()
-    acc_dict = dict()
-    mse_dict = dict()
-    subset_list = []
 
-    fig, ax = plt.subplots(nrows=5, ncols=5)
-    fig.set_figheight(9)
-    fig.set_figwidth(9)
+    should_restart = True
+    while should_restart:
+        should_restart = False
     
-    for idx in range(len(NUM_SAMPLES)):
-        if idx == 0:
-            subset_list += subset_init
-        else:
-            n_inc = NUM_SAMPLES[idx] - NUM_SAMPLES[idx-1]
-            subset_list += acq_func(n_inc, np.max(score, axis=1), candidate_list, subset_list, confi)
-        ece, mce, brier, acc, mse, ax[idx / NUM_COL, idx % NUM_COL], confi = \
-                                    spline_classification_plot(ax[idx / NUM_COL, idx % NUM_COL],
-                                    np.max(score[subset_list], axis=1).reshape(-1, 1),
-                                    np.array(Y_true == Y_predict)[subset_list] * 1,
-                                    np.max(score, axis=1).reshape(-1, 1),
-                                    np.array(Y_true == Y_predict) * 1,
-                                    gam_ref)
-        ax[idx / NUM_COL, idx % NUM_COL].set_xlabel("N=%d" % NUM_SAMPLES[idx])
-        ece_dict[NUM_SAMPLES[idx]] = ece[0]
-        mce_dict[NUM_SAMPLES[idx]] = mce
-        brier_dict[NUM_SAMPLES[idx]] = brier
-        acc_dict[NUM_SAMPLES[idx]] = acc
-        mse_dict[NUM_SAMPLES[idx]] = mse
-    fig.tight_layout()
+        ece_dict = dict()
+        mce_dict = dict()
+        brier_dict = dict()
+        acc_dict = dict()
+        mse_dict = dict()
+        subset_list = []
+
+        fig, ax = plt.subplots(nrows=5, ncols=5)
+        fig.set_figheight(9)
+        fig.set_figwidth(9)
+
+        for idx in range(len(NUM_SAMPLES)):
+            if idx == 0:
+                subset_list += subset_init
+            else:
+                n_inc = NUM_SAMPLES[idx] - NUM_SAMPLES[idx-1]
+                if np.isnan(confi).any():
+                    # should_restart = True
+                    # break
+                    confi[:,0] = 0
+                    confi[:,1] = 1
+                subset_list += acq_func(n_inc, np.max(score, axis=1), candidate_list, subset_list, confi)
+            ece, mce, brier, acc, mse, ax[idx / NUM_COL, idx % NUM_COL], confi = \
+                                        spline_classification_plot(ax[idx / NUM_COL, idx % NUM_COL],
+                                        np.max(score[subset_list], axis=1).reshape(-1, 1),
+                                        np.array(Y_true == Y_predict)[subset_list] * 1,
+                                        np.max(score, axis=1).reshape(-1, 1),
+                                        np.array(Y_true == Y_predict) * 1,
+                                        gam_ref)
+            ax[idx / NUM_COL, idx % NUM_COL].set_xlabel("N=%d" % NUM_SAMPLES[idx])
+            ece_dict[NUM_SAMPLES[idx]] = ece[0]
+            mce_dict[NUM_SAMPLES[idx]] = mce
+            brier_dict[NUM_SAMPLES[idx]] = brier
+            acc_dict[NUM_SAMPLES[idx]] = acc
+            mse_dict[NUM_SAMPLES[idx]] = mse
+        fig.tight_layout()
     
     return ece_dict, mce_dict, brier_dict, acc_dict, mse_dict, subset_list
 
